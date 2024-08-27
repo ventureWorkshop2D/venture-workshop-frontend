@@ -243,14 +243,23 @@ async function upload() {
                 method: 'POST'
             });
             if (presignedUrl) {
-                const response = await authenticatedApiRequest(presignedUrl, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'video/webm'
-                    },
-                    body: videoBlob
-                });
-                console.dir(response);
+                try {
+                    const response = await fetch(presignedUrl, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'video/webm'
+                        },
+                        body: videoBlob
+                    });
+
+                    if (response.ok) {
+                        console.log('Upload successful!');
+                    } else {
+                        console.error('Upload failed.');
+                    }
+                } catch (error) {
+                    console.error('Error uploading the video:', error);
+                }
             } else {
                 console.error('presigned url failed');
             }
