@@ -17,7 +17,7 @@ const chunkDuration = 1000;
 const longAverage = 512;
 const shortAverage = 128;
 const graphLength = 1024;
-const threshold = 30.0;
+let threshold = 30.0;
 
 function checkIsOkayToUpload() {
     const currentTime = new Date().getTime();
@@ -442,6 +442,24 @@ async function loginCheck() {
 function toggleHidden(hideElement, showElement) {
     document.getElementById(hideElement).classList.add('hidden');
     document.getElementById(showElement).classList.remove('hidden');
+}
+
+function hide(elementId) {
+    document.getElementById(elementId).classList.add('hidden');
+}
+
+function show(elementId) {
+    document.getElementById(elementId).classList.remove('hidden');
+}
+
+function showSetting() {
+    show('settingModal');
+    document.getElementById('settingThreshold').value = threshold;
+}
+
+function saveSetting() {
+    threshold = parseFloat(document.getElementById('settingThreshold').value);
+    hide('settingModal');
 }
 
 function showToast(elementId) {

@@ -15,6 +15,7 @@
         <a class="debug" onclick="upload()">업로드 (15초)</a>
         <a class="debug" onclick="dl()">다운로드</a>
         <a onclick="logout()">로그아웃</a>
+        <a onclick="showSetting()">설정</a>
         
         <p class="debug" id="anomaly-status">Anomaly: No</p>
         <div id="chartContainer" style="height: 370px; width:100%;"></div>
@@ -25,10 +26,23 @@
                 </div>
             </div>
         </div>
+        <div id="settingModal" class="hidden">
+            <div class="overlay">
+                <div class="modal">
+                    <divclass="form">
+                        <h2>설정</h2>
+                        <input id="settingThreshold" type="number" placeholder="민감도">
+                        <button id="loginButton" onclick="saveSetting()">확인</button>
+                        <button id="loginButton" onclick="hide('settingModal')">취소</button>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div id="loginModal" class="hidden">
             <div class="overlay">
                 <div class="modal">
                     <div id="loginForm" class="form">
+                        <img src="logo.png" width="100%" alt="logo">
                         <h2>로그인</h2>
                         <input id="loginUsername" name="username" type="text" placeholder="아이디">
                         <input id="loginPassword" name="password" type="password" placeholder="비밀번호">
