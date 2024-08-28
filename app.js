@@ -125,7 +125,7 @@ function register() {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-            username: username,
+            userId: username,
             password: password,
             email: email
         })
