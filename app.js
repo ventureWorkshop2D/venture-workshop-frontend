@@ -297,6 +297,34 @@ function trimBuffer() {
 }
 
 async function initWebcam() {
+    const cameraSelect = document.getElementById('cameraSelect');
+    const cameras = await navigator.mediaDevices.enumerateDevices();
+    cameras.forEach(camera => {
+        if (camera.kind === 'videoinput') {
+            const option = document.createElement('option');
+            option.value = camera.deviceId;
+            option.text = camera.label || `Camera ${cameraSelect.length + 1}`;
+            cameraSelect.appendChild(option);
+        }
+    });
+    cameraSelect.addEventListener('change', async () => {
+        if (mediaRecorder && mediaRecorder.state === 'recording')
+            mediaRecorder.stop();
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: { deviceId: { exact: cameraSelect.value } }
+        });
+        video.srcObject = stream;
+        recordedChunks = [];
+        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder.ondataavailable = event => {
+            if (event.data.size > 0) {
+                recordedChunks.push(event.data);
+                trimBuffer();
+            }
+        };
+        mediaRecorder.start();
+    });
+
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         video.srcObject = stream;
@@ -311,7 +339,9 @@ async function initWebcam() {
 
         mediaRecorder.start();
         setInterval(() => {
-            mediaRecorder.requestData();
+            console.log(mediaRecorder.state);
+            if (mediaRecorder && mediaRecorder.state === 'recording')
+                mediaRecorder.requestData();
         }, 1000);
     } catch (error) {
         console.error('Error accessing webcam:', error);
