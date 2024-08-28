@@ -298,20 +298,12 @@ function trimBuffer() {
 
 async function initWebcam() {
     const cameraSelect = document.getElementById('cameraSelect');
-    const cameras = await navigator.mediaDevices.enumerateDevices();
-    cameras.forEach(camera => {
-        if (camera.kind === 'videoinput') {
-            const option = document.createElement('option');
-            option.value = camera.deviceId;
-            option.text = camera.label || `Camera ${cameraSelect.length + 1}`;
-            cameraSelect.appendChild(option);
-        }
-    });
     cameraSelect.addEventListener('change', async () => {
         if (mediaRecorder && mediaRecorder.state === 'recording')
             mediaRecorder.stop();
         const stream = await navigator.mediaDevices.getUserMedia({
-            video: { deviceId: { exact: cameraSelect.value } }
+            video: { deviceId: { exact: cameraSelect.value } },
+            audio: true
         });
         video.srcObject = stream;
         recordedChunks = [];
@@ -338,10 +330,21 @@ async function initWebcam() {
         };
 
         mediaRecorder.start();
-        setInterval(() => {
+        setInterval(async () => {
             console.log(mediaRecorder.state);
             if (mediaRecorder && mediaRecorder.state === 'recording')
                 mediaRecorder.requestData();
+
+            const cameras = await navigator.mediaDevices.enumerateDevices();
+            cameraSelect.innerHTML = '';
+            cameras.forEach(camera => {
+                if (camera.kind === 'videoinput') {
+                    const option = document.createElement('option');
+                    option.value = camera.deviceId;
+                    option.text = camera.label || `Camera ${cameraSelect.length + 1}`;
+                    cameraSelect.appendChild(option);
+                }
+            });
         }, 1000);
     } catch (error) {
         console.error('Error accessing webcam:', error);
