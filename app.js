@@ -17,7 +17,7 @@ const chunkDuration = 1000;
 const longAverage = 512;
 const shortAverage = 128;
 const graphLength = 1024;
-const threshold = 80.0;
+const threshold = 30.0;
 
 function checkIsOkayToUpload() {
     const currentTime = new Date().getTime();
@@ -212,7 +212,7 @@ function checkZScore(samples, threshold) {
     // end of debug
 
 
-    if (zScore > threshold) {
+    if (zScore > threshold || zScore < -threshold) {
         return true;
     }
 
