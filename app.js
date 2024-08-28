@@ -11,8 +11,8 @@ let tick = 0;
 let lastUploadedTime = 0;
 const maxBufferTime = 15000;
 const chunkDuration = 1000;
-const longAverage = 1024;
-const shortAverage = 256;
+const longAverage = 512;
+const shortAverage = 128;
 const graphLength = 1024;
 
 function checkIsUploadedRecently() {
@@ -191,8 +191,8 @@ function calculateZScore(value, mean, stdDev) {
 // 주어진 리스트와 threshold를 받아 처리하는 함수
 function checkZScore(samples, threshold) {
     // 1024개의 float 값이 들어있는 리스트를 768개와 256개로 분리
-    let firstPart = samples.slice(0, 768);
-    let secondPart = samples.slice(768);
+    let firstPart = samples.slice(0, shortAverage);
+    let secondPart = samples.slice(shortAverage);
 
     // 768개의 샘플로 평균과 표준편차 계산
     let mean = firstPart.reduce((acc, val) => acc + val, 0) / firstPart.length;
