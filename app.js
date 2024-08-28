@@ -4,11 +4,14 @@ const stopButton = document.getElementById('stop');
 
 let accessToken = ''
 let refreshToken = ''
+let recorder = 1;
 let mediaRecorder;
+let mediaRecorder2;
 let recordedChunks = [];
 let dps = [];
 let tick = 0;
 let lastUploadedTime = 0;
+let trigger = false;
 const maxBufferTime = 15000;
 const chunkDuration = 1000;
 const longAverage = 512;
@@ -254,7 +257,7 @@ async function startAnomalyDetection() {
         if (checkZScore(averageRecordedAmplitudes, threshold)) {
             document.getElementById("anomaly-status").innerText = "Anomaly: Yes";
             if (checkIsOkayToUpload()) {
-                upload();
+                trigger = true;
             }
         }
         else {
@@ -272,26 +275,16 @@ startAnomalyDetection().catch(err => {
 
 function trimBuffer() {
 
-    const recentChunks = [];
-
-    let accumulatedTime = 0;
-
     // Iterate backwards through recorded chunks and accumulate duration
-    for (let i = recordedChunks.length - 1; i >= 0; i--) {
-        const chunk = recordedChunks[i];
-        accumulatedTime += chunkDuration;
-
-        // If the accumulated time exceeds max buffer time, stop collecting chunks
-        if (accumulatedTime > maxBufferTime) {
-            break;
-        }
-
-        // Push the chunk to the front of the recentChunks array
-        recentChunks.unshift(chunk);
-    }
+    recentChunks = [recordedChunks[recordedChunks.length - 1]];
 
     // Replace the recordedChunks with the recent ones
     recordedChunks = recentChunks;
+
+    if (trigger) {
+        upload();
+        trigger = false;
+    }
 }
 
 async function initWebcam() {
@@ -299,6 +292,8 @@ async function initWebcam() {
     cameraSelect.addEventListener('change', async () => {
         if (mediaRecorder && mediaRecorder.state === 'recording')
             mediaRecorder.stop();
+        if (mediaRecorder2 && mediaRecorder2.state === 'recording')
+            mediaRecorder2.stop();
         const stream = await navigator.mediaDevices.getUserMedia({
             video: { deviceId: { exact: cameraSelect.value } },
             audio: true
@@ -306,13 +301,21 @@ async function initWebcam() {
         video.srcObject = stream;
         recordedChunks = [];
         mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder2 = new MediaRecorder(stream);
         mediaRecorder.ondataavailable = event => {
             if (event.data.size > 0) {
                 recordedChunks.push(event.data);
                 trimBuffer();
             }
         };
+        mediaRecorder2.ondataavailable = event => {
+            if (event.data.size > 0) {
+                recordedChunks.push(event.data);
+                trimBuffer();
+            }
+        };
         mediaRecorder.start();
+        mediaRecorder2.start();
     });
 
     try {
@@ -329,7 +332,14 @@ async function initWebcam() {
             }
         });
         mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder2 = new MediaRecorder(stream);
         mediaRecorder.ondataavailable = event => {
+            if (event.data.size > 0) {
+                recordedChunks.push(event.data);
+                trimBuffer();
+            }
+        };
+        mediaRecorder2.ondataavailable = event => {
             if (event.data.size > 0) {
                 recordedChunks.push(event.data);
                 trimBuffer();
@@ -337,14 +347,25 @@ async function initWebcam() {
         };
 
         mediaRecorder.start();
+        mediaRecorder2.start();
         setInterval(async () => {
             console.log(mediaRecorder.state);
-            if (mediaRecorder && mediaRecorder.state === 'recording') {
-                mediaRecorder.stop();
-            } if (mediaRecorder && mediaRecorder.state === 'inactive') {
-                mediaRecorder.start();
+            if (recorder == 1) {
+                if (mediaRecorder && mediaRecorder.state === 'recording') {
+                    mediaRecorder.stop();
+                } if (mediaRecorder && mediaRecorder.state === 'inactive') {
+                    mediaRecorder.start();
+                }
+                recorder = 2;
+            } else {
+                if (mediaRecorder2 && mediaRecorder2.state === 'recording') {
+                    mediaRecorder2.stop();
+                } if (mediaRecorder2 && mediaRecorder2.state === 'inactive') {
+                    mediaRecorder2.start();
+                }
+                recorder = 1;
             }
-        }, 1000);
+        }, 7500);
     } catch (error) {
         console.error('Error accessing webcam:', error);
     }
