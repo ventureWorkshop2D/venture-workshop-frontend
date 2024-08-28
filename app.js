@@ -186,6 +186,9 @@ function login() {
 
 // Z-score 계산을 위한 함수 정의
 function calculateZScore(value, mean, stdDev) {
+    if (stdDev < 0.001) {
+        stdDev = 0.001;
+    }
     return (value - mean) / stdDev;
 }
 
