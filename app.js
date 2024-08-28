@@ -224,7 +224,7 @@ async function startAnomalyDetection() {
     
     let recordedAmplitudes = [];
     let averageRecordedAmplitudes = [];
-    const threshold = 10.0;
+    const threshold = 4.0;
 
     const pcmData = new Float32Array(analyserNode.fftSize);
     const onFrame = () => {
