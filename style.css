@@ -6,17 +6,71 @@ body {
     height: 100vh;
     background-color: #f0f0f0;
 }
-video {
-    border: 2px solid #333;
-    width: 640px;
-    height: 480px;
-    margin-bottom: 20px;
-}
-button {
-    padding: 10px 20px;
-    font-size: 16px;
-    margin: 5px;
-}
 a {
     margin-top: 10px;
+}
+
+/* styles.css */
+body {
+    font-family: Arial, sans-serif;
+}
+
+.hidden {
+    display: none;
+}
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(6px);
+    align-items: center;
+    justify-content: center;
+}
+
+.modal {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    width: 300px;
+    text-align: center;
+}
+
+.close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    cursor: pointer;
+}
+
+input {
+    width: 276px;
+    padding: 10px;
+    margin: 5px 0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+button {
+    width: 100%;
+    padding: 10px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    margin-top: 5px;
+    cursor: pointer;
+}
+
+
+button:hover {
+    background: #0056b3;
+}
+
+button:disabled, button[disabled] {
+    background: #ccc;
 }

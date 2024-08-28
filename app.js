@@ -8,8 +8,21 @@ let mediaRecorder;
 let recordedChunks = [];
 let dps = [];
 let tick = 0;
+let lastUploadedTime = 0;
 const maxBufferTime = 15000;
 const chunkDuration = 1000;
+const longAverage = 1024;
+const shortAverage = 256;
+const graphLength = 1024;
+
+function checkIsUploadedRecently() {
+    const currentTime = new Date().getTime();
+    if (currentTime - lastUploadedTime < 10000) {
+        lastUploadedTime = currentTime;
+        return true;
+    } else return false;
+}
+
 let chart = new CanvasJS.Chart("chartContainer", {
     title: {
         text: "Amplitude (dB)"
@@ -34,7 +47,7 @@ async function refreshAccessToken() {
     }
 
     try {
-        const response = await fetch('https://homerecorder.kro.kr/refresh', {
+        const response = await fetch('https://homerecorder.kro.kr/token/reIssue', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -48,10 +61,11 @@ async function refreshAccessToken() {
             console.log('Access token refreshed.');
         } else {
             console.error('Failed to refresh access token:', response.status, response.statusText);
-            // Handle token refresh failure (e.g., redirect to login)
+            activeLoginScreen();
         }
     } catch (error) {
         console.error('Error refreshing token:', error);
+        activeLoginScreen();
     }
 }
 
@@ -59,7 +73,7 @@ async function authenticatedApiRequest(endpoint, options = {}) {
     let accessToken = localStorage.getItem('accessToken');
 
     if (!accessToken) {
-        console.error('No access token found, please log in first.');
+        console.error('No access token found, please log in first.'); activeLoginScreen();
         return;
     }
 
@@ -73,7 +87,7 @@ async function authenticatedApiRequest(endpoint, options = {}) {
         let response = await fetch(endpoint, options);
 
         if (response.ok) {
-            return await response.json();
+            return await response.text();
         } else if (response.status === 401) {
             // Access token expired or unauthorized
             console.log('Access token expired, trying to refresh...');
@@ -85,7 +99,7 @@ async function authenticatedApiRequest(endpoint, options = {}) {
                 response = await fetch(endpoint, options);
 
                 if (response.ok) {
-                    return await response.json();
+                    return await response.text();
                 }
             }
         }
@@ -96,10 +110,46 @@ async function authenticatedApiRequest(endpoint, options = {}) {
     }
 }
 
+function register() {
+    let username = document.getElementById('registerUsername').value;
+    let password = document.getElementById('registerPassword').value;
+    let email = document.getElementById('registerEmail').value;
+
+    const registerButton = document.getElementById('registerButton');
+
+    registerButton.disabled = true;
+
+    fetch('https://homerecorder.kro.kr/user', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ username, password, email })
+    })
+        .then(response => {
+            if (response.ok) {
+                console.log('User registered successfully.');
+                toggleHidden('registerModal', 'loginModal');
+            } else {
+                console.error('User registration failed.');
+            }
+            registerButton.disabled = false;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            registerButton.disabled = false;
+        });
+
+}
+
 function login() {
+    const loginButton = document.getElementById('loginButton');
+    const loginModal = document.getElementById('loginModal');
+    loginButton.disabled = true;
     const formData = new URLSearchParams();
-    formData.append('username', 'test');
-    formData.append('password', 'test');
+
+    formData.append('username', document.getElementById('loginUsername').value);
+    formData.append('password', document.getElementById('loginPassword').value);
 
 
     fetch('https://homerecorder.kro.kr/login', {
@@ -115,11 +165,50 @@ function login() {
                 // JWT 토큰을 로컬 스토리지에 저장
                 localStorage.setItem('accessToken', data.accessToken);
                 localStorage.setItem('refreshToken', data.refreshToken);
+                loginModal.classList.add('hidden');
             } else {
                 console.error('Login failed.');
             }
+            loginButton.disabled = false;
         })
-        .catch(error => console.error('Error:', error));
+        .catch(error => {
+            console.error('Error:', error);
+            loginButton.disabled = false;
+        });
+}
+
+//Anomaly Detection with Z-score
+
+// Z-score 계산을 위한 함수 정의
+function calculateZScore(value, mean, stdDev) {
+    return (value - mean) / stdDev;
+}
+
+// 주어진 리스트와 threshold를 받아 처리하는 함수
+function checkZScore(samples, threshold) {
+    // 1024개의 float 값이 들어있는 리스트를 768개와 256개로 분리
+    let firstPart = samples.slice(0, 768);
+    let secondPart = samples.slice(768);
+
+    // 768개의 샘플로 평균과 표준편차 계산
+    let mean = firstPart.reduce((acc, val) => acc + val, 0) / firstPart.length;
+    let variance = firstPart.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / firstPart.length;
+    let stdDev = Math.sqrt(variance);
+
+    // 256개의 샘플에 대해 Z-score를 계산하고 threshold를 넘는지 확인
+    let secondAverage = secondPart.reduce((acc, val) => acc + val, 0) / secondPart.length;
+    let zScore = calculateZScore(secondAverage, mean, stdDev);
+
+    //debug
+    document.getElementById("zscore").innerText = zScore;
+    // end of debug
+
+
+    if (zScore > threshold) {
+        return true;
+    }
+
+    return false;
 }
 
 async function startAnomalyDetection() {
@@ -131,7 +220,7 @@ async function startAnomalyDetection() {
     
     let recordedAmplitudes = [];
     let averageRecordedAmplitudes = [];
-    const threshold = 0.07;
+    const threshold = 10.0;
 
     const pcmData = new Float32Array(analyserNode.fftSize);
     const onFrame = () => {
@@ -140,27 +229,31 @@ async function startAnomalyDetection() {
         for (const amplitude of pcmData) { sumSquares += amplitude * amplitude; }
         let nowAmplitude = Math.sqrt(sumSquares / pcmData.length);
         recordedAmplitudes.push(nowAmplitude);
-        if (recordedAmplitudes.length > 256) {
+        if (recordedAmplitudes.length > shortAverage) {
             recordedAmplitudes.shift();
         }
         const averageEnergy = recordedAmplitudes.reduce((a, b) => a + b, 0) / recordedAmplitudes.length;
         averageRecordedAmplitudes.push(averageEnergy);
-        if (averageRecordedAmplitudes.length > 1024) {
+        if (averageRecordedAmplitudes.length > longAverage) {
             averageRecordedAmplitudes.shift();
         }
         
         //update chart
         dps.push({ x: tick, y: averageEnergy });
-        if (dps.length > 1024) {
+        if (dps.length > graphLength) {
             dps.shift();
         }
         chart.render();
 
+        //Debug
         document.getElementById("nowdB").innerText = nowAmplitude;
         document.getElementById("averagedB").innerText = averageEnergy;
         document.getElementById("threshold").innerText = threshold;
-        if (averageEnergy > threshold) {
+        if (checkZScore(averageRecordedAmplitudes, threshold)) {
             document.getElementById("anomaly-status").innerText = "Anomaly: Yes";
+            if (checkIsUploadedRecently()) {
+                upload();
+            }
         }
         else {
             document.getElementById("anomaly-status").innerText = "Anomaly: No";
@@ -232,16 +325,17 @@ async function dl(){
     a.click();
 }
 
-initWebcam();
+
 
 async function upload() {
     let videoBlob = new Blob(recordedChunks, { type: 'video/webm' });
     
     if (videoBlob) {
         try {
-            const presignedUrl = await authenticatedApiRequest('https://homerecorder.kro.kr/file/presigned-url', {
+            let presignedUrl = await authenticatedApiRequest('https://homerecorder.kro.kr/file/presigned-url', {
                 method: 'POST'
             });
+            presignedUrl = JSON.parse(presignedUrl);
             if (presignedUrl) {
                 try {
                     const response = await fetch(presignedUrl, {
@@ -268,3 +362,28 @@ async function upload() {
         }
     }
 }
+
+function activeLoginScreen() {
+    document.getElementById('loginModal').classList.remove('hidden');
+}
+
+function logout() {
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    activeLoginScreen();
+}
+
+async function loginCheck() {
+    await authenticatedApiRequest('https://homerecorder.kro.kr/tokenCheck', {
+        method: 'POST'
+    });
+}
+
+function toggleHidden(hideElement, showElement) {
+    document.getElementById(hideElement).classList.add('hidden');
+    document.getElementById(showElement).classList.remove('hidden');
+}
+
+loginCheck();
+setInterval(loginCheck, 1000 * 60);
+initWebcam();

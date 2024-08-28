@@ -11,12 +11,36 @@
         <p>nowdB: <a id="nowdB">0</a></p>
         <p>averagedB: <a id="averagedB">0</a></p>
         <p>threshold: <a id="threshold">0</a></p>
+        <p>z-score: <a id="zscore">0</a></p>
         <a onclick="upload()">업로드 (15초)</a>
         <a onclick="dl()">다운로드</a>
+        <a onclick="logout()">로그아웃</a>
         
         <p id="anomaly-status">Anomaly: No</p>
         <div id="chartContainer" style="height: 370px; width:100%;"></div>
         
+        <div id="loginModal" class="hidden">
+            <div class="overlay">
+                <div class="modal">
+                    <div id="loginForm" class="form">
+                        <h2>로그인</h2>
+                        <input id="loginUsername" name="username" type="text" placeholder="아이디">
+                        <input id="loginPassword" name="password" type="password" placeholder="비밀번호">
+                        <button id="loginButton" onclick="login()">로그인</button>
+                        <p>아직 회원이 아니신가요?</p>
+                        <button onclick="toggleHidden('loginForm', 'signupForm')">회원가입</button>
+                    </div>
+                    <div id="signupForm" class="form hidden">
+                        <h2>회원가입</h2>
+                        <input id="registerUsername" name="username" type="text" placeholder="아이디">
+                        <input id="registerPassword" name="password" type="password" placeholder="비밀번호">
+                        <input id="registerEmail" name="email" type="email" placeholder="이메일">
+                        <button id="registerButton" onclick="register()">등록</button>
+                        <button onclick="toggleHidden('signupForm', 'loginForm')">뒤로</button>
+                    </div>
+                </div>
+            </div>
+        </div>
         <script src="https://cdn.canvasjs.com/canvasjs.min.js"></script>
         <script src="./app.js"></script>
     </body>
