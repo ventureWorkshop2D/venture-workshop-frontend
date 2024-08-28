@@ -18,7 +18,13 @@
         
         <p class="debug" id="anomaly-status">Anomaly: No</p>
         <div id="chartContainer" style="height: 370px; width:100%;"></div>
-        
+        <div id="capturedAlert" class="toast">
+            <div class="overlay">
+                <div class="modal">
+                    <p>이상이 감지되었습니다.</p>
+                </div>
+            </div>
+        </div>
         <div id="loginModal" class="hidden">
             <div class="overlay">
                 <div class="modal">
@@ -41,6 +47,7 @@
                 </div>
             </div>
         </div>
+        <script src="https://unpkg.com/browse/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js"></script>
         <script src="https://cdn.canvasjs.com/canvasjs.min.js"></script>
         <script src="./app.js"></script>
     </body>

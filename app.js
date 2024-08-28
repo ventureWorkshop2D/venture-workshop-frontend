@@ -234,6 +234,7 @@ async function startAnomalyDetection() {
             recordedAmplitudes.shift();
         }
         const averageEnergy = recordedAmplitudes.reduce((a, b) => a + b, 0) / recordedAmplitudes.length;
+        // const averageEnergy = nowAmplitude;
         averageRecordedAmplitudes.push(averageEnergy);
         if (averageRecordedAmplitudes.length > longAverage) {
             averageRecordedAmplitudes.shift();
@@ -338,8 +339,11 @@ async function initWebcam() {
         mediaRecorder.start();
         setInterval(async () => {
             console.log(mediaRecorder.state);
-            if (mediaRecorder && mediaRecorder.state === 'recording')
-                mediaRecorder.requestData();
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+            } if (mediaRecorder && mediaRecorder.state === 'inactive') {
+                mediaRecorder.start();
+            }
         }, 1000);
     } catch (error) {
         console.error('Error accessing webcam:', error);
@@ -353,7 +357,7 @@ async function dl(){
     document.body.appendChild(a);
     a.style = 'display: none';
     a.href = url;
-    a.download = 'recent-15seconds.webm';
+    a.download = 'recent.webm';
     a.click();
 }
 
@@ -361,7 +365,7 @@ async function dl(){
 
 async function upload() {
     let videoBlob = new Blob(recordedChunks, { type: 'video/webm' });
-    
+    showToast("capturedAlert");
     if (videoBlob) {
         try {
             let presignedUrl = await authenticatedApiRequest('https://homerecorder.kro.kr/file/presigned-url', {
@@ -414,6 +418,22 @@ async function loginCheck() {
 function toggleHidden(hideElement, showElement) {
     document.getElementById(hideElement).classList.add('hidden');
     document.getElementById(showElement).classList.remove('hidden');
+}
+
+function showToast(elementId) {
+    const toast = document.getElementById(elementId);
+    toast.style.visibility = 'visible'; // 토스트 메시지를 보이게 함
+    toast.style.opacity = 1; // 투명도를 1로 설정하여 보이도록 함
+
+    // 100ms 후에 토스트 메시지가 서서히 사라지기 시작함
+    setTimeout(() => {
+        toast.style.opacity = 0; // 서서히 사라지게 만듦
+    }, 1000);
+
+    // 5초 후에 토스트 메시지를 완전히 숨김
+    setTimeout(() => {
+        toast.style.visibility = 'hidden';
+    }, 1500); // 100ms + 5초(5000ms)
 }
 
 loginCheck();

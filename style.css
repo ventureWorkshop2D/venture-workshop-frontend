@@ -78,3 +78,9 @@ button:hover {
 button:disabled, button[disabled] {
     background: #ccc;
 }
+
+.toast {
+    visibility: hidden;
+    opacity: 1; /* 초기 투명도 */
+    transition: opacity 0.5s ease; /* 5초 동안 서서히 사라지게 */
+}
