@@ -124,7 +124,11 @@ function register() {
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ username, password, email })
+        body: JSON.stringify({
+            username: username,
+            password: password,
+            email: email
+        })
     })
         .then(response => {
             if (response.ok) {
