@@ -14,19 +14,17 @@ const chunkDuration = 1000;
 const longAverage = 512;
 const shortAverage = 128;
 const graphLength = 1024;
+const threshold = 80.0;
 
-function checkIsUploadedRecently() {
+function checkIsOkayToUpload() {
     const currentTime = new Date().getTime();
-    if (currentTime - lastUploadedTime < 10000) {
+    if (currentTime - lastUploadedTime > 10000) {
         lastUploadedTime = currentTime;
         return true;
     } else return false;
 }
 
 let chart = new CanvasJS.Chart("chartContainer", {
-    title: {
-        text: "Amplitude (dB)"
-    },
     data: [{
         type: "line",
         dataPoints: dps
@@ -224,7 +222,6 @@ async function startAnomalyDetection() {
     
     let recordedAmplitudes = [];
     let averageRecordedAmplitudes = [];
-    const threshold = 4.0;
 
     const pcmData = new Float32Array(analyserNode.fftSize);
     const onFrame = () => {
@@ -255,7 +252,7 @@ async function startAnomalyDetection() {
         document.getElementById("threshold").innerText = threshold;
         if (checkZScore(averageRecordedAmplitudes, threshold)) {
             document.getElementById("anomaly-status").innerText = "Anomaly: Yes";
-            if (checkIsUploadedRecently()) {
+            if (checkIsOkayToUpload()) {
                 upload();
             }
         }

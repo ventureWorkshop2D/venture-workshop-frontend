@@ -8,16 +8,15 @@
     <body>
         <video id="webcam" muted playsinline autoplay></video>
         <select id="cameraSelect"></select>
-        <p id="status">Waiting for microphone access...</p>
-        <p>nowdB: <a id="nowdB">0</a></p>
-        <p>averagedB: <a id="averagedB">0</a></p>
-        <p>threshold: <a id="threshold">0</a></p>
+        <p class="debug">nowdB: <a id="nowdB">0</a></p>
+        <p class="debug">averagedB: <a id="averagedB">0</a></p>
+        <p class="debug">threshold: <a id="threshold">0</a></p>
         <p>z-score: <a id="zscore">0</a></p>
-        <a onclick="upload()">업로드 (15초)</a>
-        <a onclick="dl()">다운로드</a>
+        <a class="debug" onclick="upload()">업로드 (15초)</a>
+        <a class="debug" onclick="dl()">다운로드</a>
         <a onclick="logout()">로그아웃</a>
         
-        <p id="anomaly-status">Anomaly: No</p>
+        <p class="debug" id="anomaly-status">Anomaly: No</p>
         <div id="chartContainer" style="height: 370px; width:100%;"></div>
         
         <div id="loginModal" class="hidden">

@@ -71,6 +71,10 @@ button:hover {
     background: #0056b3;
 }
 
+.debug{
+    display: none;
+}
+
 button:disabled, button[disabled] {
     background: #ccc;
 }
