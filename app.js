@@ -133,7 +133,7 @@ function register() {
         .then(response => {
             if (response.ok) {
                 console.log('User registered successfully.');
-                toggleHidden('registerModal', 'loginModal');
+                toggleHidden('signupForm', 'loginForm');
             } else {
                 console.error('User registration failed.');
             }
